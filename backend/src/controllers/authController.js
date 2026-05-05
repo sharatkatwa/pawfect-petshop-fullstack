@@ -12,7 +12,7 @@ const signup = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, password: hashedPassword });
+    const user = await User.create({ ...req.body, password: hashedPassword });
 
     return res.status(201).json({
       message: "signup successful",
@@ -79,10 +79,23 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
-const logout = async (req, res) => {};
+const logout = async (req, res) => {
+  res.clearCookie("token");
+
+  res.status(200).json({
+    message: "Logged out successfully",
+  });
+};
 
 const updateUser = async (req, res) => {};
 
 const deleteUser = async (req, res) => {};
 
-module.exports = { signup, login, updateUser, deleteUser, logout ,authMiddleware};
+module.exports = {
+  signup,
+  login,
+  updateUser,
+  deleteUser,
+  logout,
+  authMiddleware,
+};

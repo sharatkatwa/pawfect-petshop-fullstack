@@ -11,10 +11,10 @@ const { upload } = require("../config/cloudinaryStorage");
 
 const router = Router();
 
-router.get("/all",authMiddleware, getAllProduct);
+router.get("/all", getAllProduct);
 router.get("/:id", getSingleProduct);
-router.post("/create",upload.array('images',5), createProduct);
-router.patch("/update", updateProduct);
-router.delete("/remove/:id", deleteProduct);
+router.post("/create",authMiddleware,upload.array('images',5), createProduct);
+router.patch("/update",authMiddleware, updateProduct);
+router.delete("/remove/:id",authMiddleware, deleteProduct);
 
 module.exports = router
