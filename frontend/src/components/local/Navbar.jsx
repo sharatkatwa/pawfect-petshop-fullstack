@@ -1,39 +1,43 @@
 "use client";
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Button } from "../ui/button";
-import { CarFrontIcon, CircleUserRound, ShoppingCart } from "lucide-react";
+import { CircleUserRound, ShoppingCart } from "lucide-react";
 
 const Navbar = () => {
   return (
-    <div className="h-20 bg-secondary-background border-b-[5px] flex items-center justify-between px-20 fixed inset-x-0 z-99">
-      <div className="flex items-center gap-10">
-        <Link href={"/"} className="cursor-pointer flex ">
-          <img src="/logo.png" width={120} height={0} alt="Pawfect" className="object-cover object-center" />
+    <div className="fixed inset-x-0 z-99 flex h-20 items-center justify-between border-b-[4px] border-border bg-secondary-background px-5 md:px-8">
+      <div className="flex items-center gap-7 md:gap-9">
+        <Link
+          href={"/"}
+          className="flex border-[4px] border-border bg-main px-4 py-2 font-heading text-xl font-black uppercase shadow-shadow"
+        >
+          Petpunk
         </Link>
-        <div className="space-x-5">
-          <Link href={"/"} className="font-bold uppercase font-base">
-            Shop all
+        <div className="hidden items-center gap-8 md:flex">
+          <Button asChild variant={'noShadow'} className="h-10 px-6 font-heading text-sm uppercase">
+            <Link href={"/shop"}>Shop</Link>
+          </Button>
+          <Link href={"/"} className="font-heading text-sm uppercase">
+            New
           </Link>
-          <Link href={"/pets"} className="font-bold uppercase font-heading">
-            Dogs
+          <Link href={"/products"} className="font-heading text-sm uppercase">
+            Brands
           </Link>
-          <Link href={"/pets"} className="font-bold uppercase font-heading">
-            Cats
-          </Link>
-          <Link href={"/pets"} className="font-bold uppercase font-heading">
-            Small Pets
-          </Link>
-          <Link href={"/products"} className="font-bold uppercase font-heading">
-            Exotics
+          <Link href={"/pets"} className="font-heading text-sm uppercase">
+            Sale
           </Link>
         </div>
       </div>
-      <div className="flex items-center gap-4">
-        <Button className={"font-bold font-heading"}>Adopt Now</Button>
-        <ShoppingCart fill="true" strokeWidth={2.25} />
-        <CircleUserRound strokeWidth={2.25} />
+      <div className="flex items-center gap-5">
+        <input
+          type="search"
+          aria-label="Search"
+          placeholder="SEARCH..."
+          className="hidden h-10 w-64 border-2 border-border bg-secondary-background px-4 font-heading text-sm uppercase outline-none placeholder:text-foreground/60 md:block"
+        />
+        <ShoppingCart className="h-6 w-6" strokeWidth={2.25} />
+        <CircleUserRound className="h-6 w-6" strokeWidth={2.25} />
       </div>
     </div>
   );

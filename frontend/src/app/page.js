@@ -10,19 +10,22 @@ const categoryCards = [
   {
     title: "Dogs",
     subtitle: "For the loud barkers",
-    image: "https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=900&q=80",
+    image:
+      "https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=900&q=80",
     color: "var(--chart-1)",
   },
   {
     title: "Cats",
     subtitle: "For the midnight zoomies",
-    image: "https://images.unsplash.com/photo-1519052537078-e6302a4968d4?auto=format&fit=crop&w=900&q=80",
+    image:
+      "https://images.unsplash.com/photo-1519052537078-e6302a4968d4?auto=format&fit=crop&w=900&q=80",
     color: "var(--chart-3)",
   },
   {
     title: "Others",
     subtitle: "For the weird & wonderful",
-    image: "https://images.unsplash.com/photo-1516934024742-b461fba47600?auto=format&fit=crop&w=900&q=80",
+    image:
+      "https://images.unsplash.com/photo-1516934024742-b461fba47600?auto=format&fit=crop&w=900&q=80",
     color: "var(--chart-2)",
   },
 ];
@@ -32,23 +35,27 @@ const arrivals = [
     name: "Spiked Neon Collar",
     price: "$45.00",
     tag: "New",
-    image: "https://images.unsplash.com/photo-1583512603806-077998240c7a?auto=format&fit=crop&w=900&q=80",
+    image:
+      "https://images.unsplash.com/photo-1583512603806-077998240c7a?auto=format&fit=crop&w=900&q=80",
   },
   {
     name: "Organic Punk Treats",
     price: "$18.99",
-    image: "https://images.unsplash.com/photo-1581888227599-779811939961?auto=format&fit=crop&w=900&q=80",
+    image:
+      "https://images.unsplash.com/photo-1581888227599-779811939961?auto=format&fit=crop&w=900&q=80",
   },
   {
     name: "Graffiti Raincoat",
     price: "$62.00",
     tag: "Hot",
-    image: "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=900&q=80",
+    image:
+      "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=900&q=80",
   },
   {
     name: "Steel Brutalist Bowl",
     price: "$29.00",
-    image: "https://images.unsplash.com/photo-1511909525232-61113c912358?auto=format&fit=crop&w=900&q=80",
+    image:
+      "https://images.unsplash.com/photo-1511909525232-61113c912358?auto=format&fit=crop&w=900&q=80",
   },
 ];
 
@@ -67,11 +74,29 @@ function ZigZagDivider() {
 
 export default function Home() {
   return (
-    <main className="flex-1 bg-background tracking-tight">
-    <FloatingElement className={'h-20 w-20 animate-floatY rotate-20 bg-chart-3 absolute right-[15%] top-[50%] z-80'} />
-          <FloatingElement className={'h-15 w-15 animate-floatY rounded-full rotate-0 bg-chart-1 absolute right-[10%] top-[20%] z-80'} />
-          <FloatingElement className={'h-25 w-25 animate-floatY  rotate-0 bg-chart-1 absolute right-[10%] top-[70%] z-80'} />
-          <FloatingElement className={'h-15 w-15 animate-floatY rounded-full rotate-0 bg-chart-2 absolute right-[47%] top-[35%] z-80'} />
+    <main className="flex-1 bg-background tracking-tight pt-10">
+      {/* <div className="absolute inset-0 top-100"> */}
+        <FloatingElement
+          className={
+            "h-20 w-20 animate-floatY rotate-20 bg-chart-3 absolute right-[15%] top-[50%] z-80"
+          }
+        />
+        <FloatingElement
+          className={
+            "h-15 w-15 animate-floatY rounded-full rotate-0 bg-chart-1 absolute right-[10%] top-[20%] z-80"
+          }
+        />
+        <FloatingElement
+          className={
+            "h-25 w-25 animate-floatY  rotate-0 bg-chart-1 absolute right-[10%] top-[70%] z-80"
+          }
+        />
+        <FloatingElement
+          className={
+            "h-15 w-15 animate-floatY rounded-full rotate-0 bg-chart-2 absolute right-[47%] top-[35%] z-80"
+          }
+        />
+      {/* </div> */}
       <section className="border-b-[3px] border-border bg-chart-2">
         <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-[1400px] gap-14 px-6 py-16 md:px-10 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:px-16 lg:py-24">
           <div className="max-w-xl space-y-8">
@@ -86,8 +111,9 @@ export default function Home() {
                 Pet gear with punk energy.
               </h1>
               <p className="max-w-md text-base leading-8 text-foreground sm:text-lg">
-                Ditch the boring beige. Give your companion the edge they deserve with our hand-picked collection of
-                neobrutalist pet essentials.
+                Ditch the boring beige. Give your companion the edge they
+                deserve with our hand-picked collection of neobrutalist pet
+                essentials.
               </p>
             </div>
             <Button className="h-auto border-[3px] bg-[var(--chart-3)] px-8 py-5 font-heading text-2xl uppercase text-black hover:bg-[var(--chart-3)]">
@@ -144,12 +170,13 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-b-[3px] border-border bg-[var(--chart-1)]">
+      <section className=" border-border bg-[var(--chart-1)]">
         <div className="mx-auto flex max-w-[1400px] flex-col gap-8 px-6 py-12 md:px-10 lg:flex-row lg:items-center lg:justify-between lg:px-16">
           <div className="max-w-xl space-y-4">
             <p className="font-heading text-2xl uppercase">Join the pack</p>
             <p className="max-w-lg font-heading text-lg uppercase leading-8 text-foreground">
-              Get exclusive drops, pet anarchy news, and 10% off your first order.
+              Get exclusive drops, pet anarchy news, and 10% off your first
+              order.
             </p>
           </div>
           <form className="flex w-full max-w-xl flex-col gap-4 sm:flex-row">
@@ -168,49 +195,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="bg-[var(--chart-1)]">
-        <div className="mx-auto flex max-w-[1400px] flex-col gap-8 px-6 py-8 md:px-10 lg:flex-row lg:items-center lg:justify-between lg:px-16">
-          <div className="space-y-2">
-            <img src="/logo.png" alt="Petpunk" className="h-auto w-28 object-contain" />
-            <p className="font-heading text-xs uppercase tracking-[0.08em] text-foreground">
-              © 2024 Petpunk. Unapologetically loud.
-            </p>
-          </div>
-
-          <nav className="flex flex-wrap items-center gap-4 font-heading text-sm uppercase tracking-[0.1em] text-foreground">
-            <a href="#" className="border-r-[3px] border-border pr-4">
-              Privacy
-            </a>
-            <a href="#" className="border-r-[3px] border-border pr-4">
-              Terms
-            </a>
-            <a href="#" className="border-r-[3px] border-border pr-4">
-              Shipping
-            </a>
-            <a href="#" className="border-r-[3px] border-border pr-4">
-              Returns
-            </a>
-            <a href="#">Contact</a>
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <Button
-              type="button"
-              className="flex h-12 w-12 i bg-black text-white "
-              aria-label="Share site"
-            >
-              <Share2 className="h-5 w-5" strokeWidth={2.25} />
-            </Button>
-            <Button
-              type="button"
-              className="flex h-12 w-12 items-center justify-center border-[3px] border-border bg-black text-white shadow-shadow"
-              aria-label="Like site"
-            >
-              <ThumbsUp className="h-5 w-5" strokeWidth={2.25} />
-            </Button>
-          </div>
-        </div>
-      </footer>
+      
     </main>
   );
 }
