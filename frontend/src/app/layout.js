@@ -5,6 +5,7 @@ import Navbar from "@/components/local/Navbar";
 import ReduxProvider from "@/components/providers/ReduxProvider";
 import { Toaster } from "@/components/ui/sonner";
 
+
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",
 //   subsets: ["latin"],
@@ -28,10 +29,12 @@ export default function RootLayout({ children }) {
         className="min-h-full h-full flex flex-col font-heading"
       >
         <ReduxProvider>
-          <Navbar />
-          <div className="flex-1">{children}</div>
-          <Footer />
-          <Toaster />
+          
+            <Navbar />
+            <div className="flex-1">{children}</div>
+            <Footer />
+            <Toaster />
+          
         </ReduxProvider>
       </body>
     </html>

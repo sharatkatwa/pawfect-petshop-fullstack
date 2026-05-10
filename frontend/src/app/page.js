@@ -1,3 +1,4 @@
+"use client";
 import { ArrowRight, Share2, ShoppingCart, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -5,6 +6,10 @@ import CategoryCard from "@/components/local/CategoryCard";
 import SectionLabel from "@/components/local/SectionLabel";
 import ProductCard from "@/components/local/ProductCard";
 import FloatingElement from "@/components/local/FloatingElement";
+import { useRouter } from "next/navigation";
+import { getCurrentUser } from "@/store/thunks/authThunk";
+import { useEffect } from "react";
+import { dispatch } from "@/store/store";
 
 const categoryCards = [
   {
@@ -60,42 +65,58 @@ const arrivals = [
 ];
 
 function ZigZagDivider() {
+  const points = Array.from({ length: 81 }, (_, index) => {
+    const x = index * 20;
+    const y = index % 2 === 0 ? 16 : 4;
+    return `${x},${y}`;
+  }).join(" ");
+
   return (
-    <div
+    <svg
       aria-hidden="true"
-      className="h-5 w-full bg-repeat-x"
-      style={{
-        backgroundImage:
-          "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='20' viewBox='0 0 80 20'%3E%3Cpath d='M0 10 L6 4 L12 10 L18 4 L24 10 L30 4 L36 10 L42 4 L48 10 L54 4 L60 10 L66 4 L72 10 L78 4 L80 6' fill='none' stroke='black' stroke-width='3' stroke-linecap='square'/%3E%3C/svg%3E\")",
-      }}
-    />
+      className="block h-5 w-full"
+      viewBox="0 0 1600 20"
+      preserveAspectRatio="none"
+    >
+      <polyline
+        points={points}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinejoin="miter"
+        strokeLinecap="square"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
   );
 }
 
 export default function Home() {
+ 
+  const router = useRouter();
   return (
     <main className="flex-1 bg-background tracking-tight pt-10">
       {/* <div className="absolute inset-0 top-100"> */}
-        <FloatingElement
-          className={
-            "h-20 w-20 animate-floatY rotate-20 bg-chart-3 absolute right-[15%] top-[50%] z-80"
-          }
-        />
-        <FloatingElement
-          className={
-            "h-15 w-15 animate-floatY rounded-full rotate-0 bg-chart-1 absolute right-[10%] top-[20%] z-80"
-          }
-        />
-        <FloatingElement
-          className={
-            "h-25 w-25 animate-floatY  rotate-0 bg-chart-1 absolute right-[10%] top-[70%] z-80"
-          }
-        />
-        <FloatingElement
-          className={
-            "h-15 w-15 animate-floatY rounded-full rotate-0 bg-chart-2 absolute right-[47%] top-[35%] z-80"
-          }
-        />
+      <FloatingElement
+        className={
+          "h-20 w-20 animate-floatY rotate-20 bg-chart-3 absolute right-[15%] top-[50%] z-80"
+        }
+      />
+      <FloatingElement
+        className={
+          "h-15 w-15 animate-floatY rounded-full rotate-0 bg-chart-1 absolute right-[10%] top-[20%] z-80"
+        }
+      />
+      <FloatingElement
+        className={
+          "h-25 w-25 animate-floatY  rotate-0 bg-chart-1 absolute right-[10%] top-[70%] z-80"
+        }
+      />
+      <FloatingElement
+        className={
+          "h-15 w-15 animate-floatY rounded-full rotate-0 bg-chart-2 absolute right-[47%] top-[35%] z-80"
+        }
+      />
       {/* </div> */}
       <section className="border-b-[3px] border-border bg-chart-2">
         <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-[1400px] gap-14 px-6 py-16 md:px-10 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:px-16 lg:py-24">
@@ -157,7 +178,12 @@ export default function Home() {
             eyebrow="New arrivals"
             title="Fresh from the underground"
             action={
-              <Button className="h-auto border-[3px] bg-secondary-background px-6 py-3 font-heading uppercase text-foreground">
+              <Button
+                onClick={() => {
+                  router.push("/shop");
+                }}
+                className="h-auto border-[3px] bg-secondary-background px-6 py-3 font-heading uppercase text-foreground"
+              >
                 View all
               </Button>
             }
@@ -194,8 +220,6 @@ export default function Home() {
           </form>
         </div>
       </section>
-
-      
     </main>
   );
 }

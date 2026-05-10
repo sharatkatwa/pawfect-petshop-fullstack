@@ -2,6 +2,7 @@ const express = require("express");
 const dbConnect = require("./config/db");
 const User = require("./models/user.model");
 const cors = require("cors");
+const cookieParser = require('cookie-parser')
 
 const app = express();
 
@@ -9,7 +10,11 @@ const app = express();
 const userRouter = require("./routes/userRoutes");
 const productRouter = require("./routes/productRoutes");
 
-app.use(cors());
+app.use(cookieParser())
+app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true,
+}));
 
 dbConnect();
 

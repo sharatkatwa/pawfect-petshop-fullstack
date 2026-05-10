@@ -10,10 +10,14 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import { dispatch } from "@/store/store";
 import { getCurrentUser, loginUser } from "@/store/thunks/authThunk";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useSelector } from "react-redux";
 import { toast } from "sonner";
 
 export default function Login() {
@@ -23,12 +27,19 @@ export default function Login() {
     formState: { errors },
     reset,
   } = useForm();
+  const router = useRouter();
+  const { user, loading, error } = useSelector((state) => state.auth);
 
   const onLoginSubmit = (data) => {
     // console.log(e)
     dispatch(loginUser(data));
+    reset()
   };
 
+  useEffect(() => {
+    if (user) router.push("/");
+  }, [user, router]);
+  
   return (
     <div className="flex items-center justify-center w-full h-full bg-secondary-background">
       <Card className="w-full max-w-sm">
@@ -81,17 +92,13 @@ export default function Login() {
           <CardFooter className="flex-col gap-2">
             <Button
               // onClick={() => dispatch(loginUser())}
+              variant={loading?'disabled':'default'}
               type="submit"
               className="w-full"
             >
-              Login
+              {loading? <><Spinner/> Logging in...</>:'Login'}
             </Button>
-            <Button
-             
-              type="button"
-              variant="neutral"
-              className="w-full"
-            >
+            <Button type="button"  variant="neutral" className="w-full">
               Login with Google
             </Button>
 
