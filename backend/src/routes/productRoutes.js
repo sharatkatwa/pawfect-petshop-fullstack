@@ -14,7 +14,7 @@ const router = Router();
 router.get("/all", getAllProduct);
 router.get("/:id", getSingleProduct);
 router.post("/create",authMiddleware,upload.array('images',5), createProduct);
-router.patch("/update",authMiddleware, updateProduct);
+router.patch("/update/:id", authMiddleware, updateProduct);
 router.delete("/remove/:id",authMiddleware, deleteProduct);
 
 module.exports = router

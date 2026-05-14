@@ -1,9 +1,21 @@
-const Order = require('../models/order.model')
-const Product = require('../models/product.model')
+const Order = require("../models/order.model");
+const Product = require("../models/product.model");
+const asyncHandler = require("../utils/asyncHandler");
 
-const createOrder = async(req,res) =>{return}
-const getMyOrders = async(req,res) =>{return}
-const cancelOrder = async(req,res) =>{return}
-const getSingleOrder = async(req,res) =>{return}
+const createOrder = asyncHandler(async (req, res) => {
+  return;
+});
 
-module.exports ={createOrder,getMyOrders,cancelOrder,getSingleOrder}
+const getMyOrders = asyncHandler(async (req, res) => {
+  return;
+});
+
+const cancelOrder = asyncHandler(async (req, res) => {
+  return;
+});
+
+const getSingleOrder = asyncHandler(async (req, res) => {
+  return;
+});
+
+module.exports = { createOrder, getMyOrders, cancelOrder, getSingleOrder };

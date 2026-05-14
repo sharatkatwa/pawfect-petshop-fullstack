@@ -3,6 +3,7 @@ const dbConnect = require("./config/db");
 const User = require("./models/user.model");
 const cors = require("cors");
 const cookieParser = require('cookie-parser')
+const apiError = require("./utils/apiError");
 
 const app = express();
 
@@ -23,4 +24,9 @@ app.use(express.json());
 app.use("/api/v1/product/", productRouter);
 app.use("/api/v1/user/", userRouter);
 
+
+app.use((error, req, res, next) => {
+    const statusCode = error instanceof apiError ? error.statusCode : 500;
+    res.status(statusCode).json({ message: error.message || 'internal server error' })
+})
 module.exports = app;
