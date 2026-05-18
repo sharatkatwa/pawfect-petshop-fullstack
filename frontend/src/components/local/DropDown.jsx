@@ -23,7 +23,7 @@ import { logoutUser } from "@/store/thunks/authThunk";
 
 export default function DropDown() {
   const { user,isAuthenticated, } = useSelector((state) => state.auth);
-  console.log(user);
+  // console.log(user);
   const dispatch = useDispatch()
   return (
     <DropdownMenu>

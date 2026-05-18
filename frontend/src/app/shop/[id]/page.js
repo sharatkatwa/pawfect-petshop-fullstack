@@ -1,42 +1,62 @@
-import { notFound } from "next/navigation";
+"use client";
+
 import ProductDetail from "@/components/local/shop/ProductDetail";
 import ProductReviews from "@/components/local/shop/ProductReviews";
-import { getShopProductById, shopProducts } from "@/components/local/shop/shopData";
+import { clearSingleProduct } from "@/store/features/productSlice";
+import { getSingleProduct } from "@/store/thunks/productThunk";
+import { useParams } from "next/navigation";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
-export function generateStaticParams() {
-  return shopProducts.map((product) => ({
-    id: product.id,
-  }));
-}
+export default function ProductDetailsPage() {
+  const { id } = useParams();
+  const dispatch = useDispatch();
+  const { product, loading, error } = useSelector((state) => state.product);
 
-export async function generateMetadata({ params }) {
-  const { id } = await params;
-  const product = getShopProductById(id);
+  useEffect(() => {
+    if (id) {
+      dispatch(getSingleProduct(id));
+    }
 
-  if (!product) {
-    return {
-      title: "Product not found | Petpunk",
+    return () => {
+      dispatch(clearSingleProduct());
     };
+  }, [dispatch, id]);
+
+  if (loading && !product) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background font-heading text-foreground">
+        <p className="border-[4px] border-border bg-secondary-background px-6 py-4 text-xl font-black uppercase shadow-shadow">
+          Loading product...
+        </p>
+      </main>
+    );
   }
 
-  return {
-    title: `${product.name} | Petpunk`,
-    description: product.description,
-  };
-}
-
-export default async function ProductDetailsPage({ params }) {
-  const { id } = await params;
-  const product = getShopProductById(id);
+  if (error) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background font-heading text-foreground">
+        <p className="border-[4px] border-border bg-secondary-background px-6 py-4 text-xl font-black uppercase shadow-shadow">
+          {error}
+        </p>
+      </main>
+    );
+  }
 
   if (!product) {
-    notFound();
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background font-heading text-foreground">
+        <p className="border-[4px] border-border bg-secondary-background px-6 py-4 text-xl font-black uppercase shadow-shadow">
+          Product not found
+        </p>
+      </main>
+    );
   }
 
   return (
     <main className="min-h-screen bg-background font-heading text-foreground">
       <ProductDetail product={product} />
-      <ProductReviews reviews={product.reviews} />
+      <ProductReviews reviews={[]} />
     </main>
   );
 }

@@ -5,17 +5,17 @@ const {
   updateUser,
   deleteUser,
   signup,
-  authMiddleware,
   getMe,
 } = require("../controllers/authController");
+const { protect } = require("../middlewares/auth.middleware");
 
 const router = Router();
 
 router.post("/signup", signup);
 router.post("/login", login);
-router.get("/me", authMiddleware, getMe);
+router.get("/me", protect, getMe);
 router.post("/logout", logout);
-router.patch("/update/:id", updateUser);
-router.delete("/delete/:id", deleteUser);
+router.patch("/update/:id", protect, updateUser);
+router.delete("/delete/:id", protect, deleteUser);
 
 module.exports = router;

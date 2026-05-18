@@ -27,11 +27,40 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    shippingAddress:{
-        phone:{type:String,required:true},
-        address:{type:string,required:true,maxlength:[200,'Maximum 200 characters allowed']}
+    shippingAddress: {
+      phone: { type: String, required: true },
+      address: {
+        type: String,
+        required: true,
+        maxlength: [200, "Maximum 200 characters allowed"],
+      },
+    },
+    paymentMethod: {
+      type: String,
+      enum: ["cod", "razorpay"],
+      default: "cod",
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed", "refunded"],
+      default: "pending",
+    },
+    razorpayOrderId: {
+      type: String,
+      trim: true,
+    },
+    razorpayPaymentId: {
+      type: String,
+      trim: true,
+    },
+    razorpaySignature: {
+      type: String,
+      trim: true,
     },
     paid: { type: Boolean, required: true, default: false },
+    paidAt: {
+      type: Date,
+    },
     status: {
       type: String,
       enum: ["pending", "confirmed", "shipped", "delivered", "cancelled"],
@@ -41,4 +70,4 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-module.exports = mongoose.model('Order',orderSchema)
+module.exports = mongoose.model("Order", orderSchema);

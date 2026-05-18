@@ -78,6 +78,17 @@ const productSchema = new mongoose.Schema(
       enum: ["available", "sold", "out_of_stock"],
       default: "available",
     },
+    averageRating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    totalReviews: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   {
     timestamps: true,

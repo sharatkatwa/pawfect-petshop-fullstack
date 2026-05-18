@@ -2,7 +2,7 @@ function ReviewCard({ title, body, author }) {
   return (
     <article className="border-[4px] border-border bg-secondary-background p-7 shadow-shadow">
       <p className="font-heading text-3xl leading-none" aria-label="5 star review">
-        ☆ ☆ ☆ ☆ ☆
+        *****
       </p>
       <h3 className="mt-4 font-heading text-sm font-black uppercase">{title}</h3>
       <p className="mt-4 text-base leading-7">{body}</p>
@@ -12,6 +12,8 @@ function ReviewCard({ title, body, author }) {
 }
 
 export default function ProductReviews({ reviews }) {
+  if (!reviews?.length) return null;
+
   return (
     <section className="border-t-[4px] border-border">
       <div className="mx-auto max-w-[1400px] px-5 py-20 md:px-8">

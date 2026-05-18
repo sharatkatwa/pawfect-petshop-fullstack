@@ -86,29 +86,7 @@ const login = asyncHandler(async (req, res) => {
   });
 });
 
-const authMiddleware = asyncHandler(async (req, res, next) => {
-  let token;
-  // token getting code
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer ")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
-  } else if (req.cookies.token) {
-    token = req.cookies.token;
-  } else {
-    throw new apiError(401, "Unauthorized access, token not found");
-  }
 
-  // main verification code
-  const decoded = await jwtDecode(token);
-  const user = await User.findById(decoded.id);
-  if (!user) {
-    throw new apiError(401, "User not found");
-  }
-  req.user = user;
-  next();
-});
 
 const logout = asyncHandler((req, res) => {
   res.clearCookie("token");
@@ -126,9 +104,83 @@ const getMe = asyncHandler(async (req, res) => {
   throw new apiError(401, "Login to get your details");
 });
 
-const updateUser = asyncHandler(async (req, res) => {});
+const updateUser = asyncHandler(async (req, res) => {
+  const { id } = req.params;
 
-const deleteUser = asyncHandler(async (req, res) => {});
+  if (!req.user) {
+    throw new apiError(401, "Login required to update profile");
+  }
+
+  const isOwner = req.user._id.toString() === id;
+  const isAdmin = req.user.admin;
+
+  if (!isOwner && !isAdmin) {
+    throw new apiError(403, "You are not allowed to update this user");
+  }
+
+  const allowedFields = ["name", "age", "phone", "address"];
+  const updateData = {};
+
+  allowedFields.forEach((field) => {
+    if (req.body[field] !== undefined) {
+      updateData[field] = req.body[field];
+    }
+  });
+
+  if (!Object.keys(updateData).length) {
+    throw new apiError(400, "No valid fields provided for update");
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(id, updateData, {
+    new: true,
+    runValidators: true,
+  });
+
+  if (!updatedUser) {
+    throw new apiError(404, "User not found");
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "User updated successfully",
+    user: updatedUser,
+  });
+});
+
+const deleteUser = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!req.user) {
+    throw new apiError(401, "Login required to delete account");
+  }
+
+  const isOwner = req.user._id.toString() === id;
+  const isAdmin = req.user.admin;
+
+  if (!isOwner && !isAdmin) {
+    throw new apiError(403, "You are not allowed to delete this user");
+  }
+
+  const deletedUser = await User.findByIdAndUpdate(
+    id,
+    { isActive: false },
+    { new: true },
+  );
+
+  if (!deletedUser) {
+    throw new apiError(404, "User not found");
+  }
+
+  if (isOwner) {
+    res.clearCookie("token");
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "User deleted successfully",
+    user: deletedUser,
+  });
+});
 
 module.exports = {
   signup,
@@ -136,6 +188,5 @@ module.exports = {
   updateUser,
   deleteUser,
   logout,
-  authMiddleware,
   getMe,
 };
