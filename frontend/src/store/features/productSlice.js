@@ -2,19 +2,28 @@ import { createSlice } from "@reduxjs/toolkit";
 import { toast } from "sonner";
 import {
   createProduct,
+  deleteProductReview,
   deleteProduct,
   getAllProducts,
+  getMyProducts,
+  getProductReviews,
   getSingleProduct,
   updateProduct,
 } from "../thunks/productThunk";
 
 const initialState = {
   products: [],
+  sellerProducts: [],
   product: null,
+  reviewsByProduct: {},
   total: 0,
+  sellerTotal: 0,
   page: 1,
   limit: 10,
   totalPages: 1,
+  sellerPage: 1,
+  sellerLimit: 10,
+  sellerTotalPages: 1,
   loading: false,
   error: null,
 };
@@ -68,6 +77,24 @@ const productSlice = createSlice({
         state.error = action.payload;
         toast.error(action.payload, { position: "top-center" });
       })
+      .addCase(getMyProducts.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getMyProducts.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+        state.sellerProducts = action.payload.products || [];
+        state.sellerTotal = action.payload.totalProducts || 0;
+        state.sellerPage = action.payload.page || 1;
+        state.sellerLimit = action.payload.limit || 10;
+        state.sellerTotalPages = action.payload.totalPages || 1;
+      })
+      .addCase(getMyProducts.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        toast.error(action.payload, { position: "top-center" });
+      })
       .addCase(createProduct.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -76,7 +103,9 @@ const productSlice = createSlice({
         state.loading = false;
         state.error = null;
         state.products.unshift(action.payload.newProduct);
+        state.sellerProducts.unshift(action.payload.newProduct);
         state.total += 1;
+        state.sellerTotal += 1;
         toast.success(action.payload.message, { position: "top-center" });
       })
       .addCase(createProduct.rejected, (state, action) => {
@@ -97,6 +126,9 @@ const productSlice = createSlice({
         state.products = state.products.map((product) =>
           product._id === updatedProduct._id ? updatedProduct : product,
         );
+        state.sellerProducts = state.sellerProducts.map((product) =>
+          product._id === updatedProduct._id ? updatedProduct : product,
+        );
         toast.success(action.payload.message, { position: "top-center" });
       })
       .addCase(updateProduct.rejected, (state, action) => {
@@ -114,10 +146,58 @@ const productSlice = createSlice({
         state.products = state.products.filter(
           (product) => product._id !== action.payload.id,
         );
+        state.sellerProducts = state.sellerProducts.filter(
+          (product) => product._id !== action.payload.id,
+        );
         state.total = Math.max(state.total - 1, 0);
+        state.sellerTotal = Math.max(state.sellerTotal - 1, 0);
         toast.success(action.payload.message, { position: "top-center" });
       })
       .addCase(deleteProduct.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        toast.error(action.payload, { position: "top-center" });
+      })
+      .addCase(getProductReviews.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getProductReviews.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+        state.reviewsByProduct[action.payload.productId] = {
+          reviews: action.payload.reviews || [],
+          totalReviews: action.payload.totalReviews || 0,
+          totalPages: action.payload.totalPages || 1,
+          page: action.payload.page || 1,
+          averageRating: action.payload.averageRating || 0,
+        };
+      })
+      .addCase(getProductReviews.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        toast.error(action.payload, { position: "top-center" });
+      })
+      .addCase(deleteProductReview.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteProductReview.fulfilled, (state, action) => {
+        const reviewState = state.reviewsByProduct[action.payload.productId];
+
+        state.loading = false;
+        state.error = null;
+
+        if (reviewState) {
+          reviewState.reviews = reviewState.reviews.filter(
+            (review) => review._id !== action.payload.reviewId,
+          );
+          reviewState.totalReviews = Math.max(reviewState.totalReviews - 1, 0);
+        }
+
+        toast.success(action.payload.message, { position: "top-center" });
+      })
+      .addCase(deleteProductReview.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
         toast.error(action.payload, { position: "top-center" });

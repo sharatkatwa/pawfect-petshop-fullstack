@@ -1,21 +1,13 @@
 import { Heart, LogOut, Package, PlusCircle, User, UserCircle2Icon } from "lucide-react";
-
-import React from "react";
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useDispatch, useSelector } from "react-redux";
@@ -37,18 +29,22 @@ export default function DropDown() {
         <DropdownMenuSeparator />
         {isAuthenticated && user?.role === "seller" && (
           <DropdownMenuGroup>
-            <DropdownMenuItem>
-              <PlusCircle />
-              <span>Add More Products</span>
+            <DropdownMenuItem asChild>
+              <Link href="/seller/dashboard">
+                <PlusCircle />
+                <span>Seller Dashboard</span>
+              </Link>
             </DropdownMenuItem>
           </DropdownMenuGroup>
         )}
 
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <User />
-            <span> {user?.name}</span>
+          <DropdownMenuItem asChild>
+            <Link href="/profile">
+              <User />
+              <span> {user?.name}</span>
+            </Link>
           </DropdownMenuItem>
 
           <DropdownMenuItem asChild>
@@ -58,9 +54,11 @@ export default function DropDown() {
             </Link>
           </DropdownMenuItem>
 
-          <DropdownMenuItem>
-            <Heart />
-            <span>WishList</span>
+          <DropdownMenuItem asChild>
+            <Link href="/wishlist">
+              <Heart />
+              <span>WishList</span>
+            </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

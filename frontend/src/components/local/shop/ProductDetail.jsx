@@ -1,9 +1,20 @@
 "use client";
 
-import { CreditCard, ShoppingBag } from "lucide-react";
+import { CreditCard, Heart, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import { addToCart } from "@/store/thunks/cartThunk";
+import {
+  addToWishlist,
+  removeFromWishlist,
+} from "@/store/thunks/wishlistThunk";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
@@ -43,11 +54,24 @@ export default function ProductDetail({ product }) {
   const router = useRouter();
   const { isAuthenticated } = useSelector((state) => state.auth);
   const { loading } = useSelector((state) => state.cart);
+  const { items: wishlistItems, loading: wishlistLoading } = useSelector(
+    (state) => state.wishlist,
+  );
 
+  const productImages = product.images?.length
+    ? product.images
+    : [
+        `https://placehold.co/800x600/png?text=${encodeURIComponent(product.productName || "Product")}`,
+      ];
   const imageSrc =
-    product.images?.[0] ||
+    productImages[0] ||
     `https://placehold.co/800x600/png?text=${encodeURIComponent(product.productName || "Product")}`;
+  const hasMultipleImages = productImages.length > 1;
   const isUnavailable = product.status !== "available" || product.stock < 1;
+  const isWishlisted = wishlistItems.some((item) => {
+    const wishlistProduct = item.product || {};
+    return (wishlistProduct._id || item.product) === product._id;
+  });
 
   const handleAddToCart = () => {
     if (!isAuthenticated) {
@@ -69,6 +93,20 @@ export default function ProductDetail({ product }) {
     router.push(`/checkout?productId=${product._id}&quantity=1`);
   };
 
+  const handleWishlist = () => {
+    if (!isAuthenticated) {
+      toast.error("Login to save products", { position: "top-center" });
+      router.push("/auth/login");
+      return;
+    }
+
+    dispatch(
+      isWishlisted
+        ? removeFromWishlist(product._id)
+        : addToWishlist(product._id),
+    );
+  };
+
   const specs = [
     product.category ? `Category: ${product.category}` : null,
     product.petType ? `Pet type: ${product.petType}` : null,
@@ -87,14 +125,47 @@ export default function ProductDetail({ product }) {
   return (
     <section className="mx-auto grid max-w-[1400px] gap-12 px-5 pb-20 pt-32 md:px-8 lg:grid-cols-[1fr_1fr] lg:gap-16">
       <div className="space-y-3">
-        <div className="border-[4px] border-border bg-secondary-background p-0 shadow-[8px_8px_0_0_var(--border)]">
-          <Image
-            src={imageSrc}
-            alt={product.productName}
-            width={900}
-            height={900}
-            className="aspect-square w-full object-cover"
-          />
+        <div className="relative border-[4px] border-border bg-secondary-background p-0 shadow-[8px_8px_0_0_var(--border)]">
+          {hasMultipleImages ? (
+            <Carousel opts={{ loop: true }} className="w-full">
+              <CarouselContent className="-ml-0">
+                {productImages.map((image, index) => (
+                  <CarouselItem key={`${image}-${index}`} className="pl-0">
+                    <Image
+                      src={image}
+                      alt={`${product.productName} image ${index + 1}`}
+                      width={900}
+                      height={900}
+                      className="aspect-square w-full object-cover"
+                    />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="left-4 z-10 h-12 w-12 border-[4px] bg-secondary-background shadow-[4px_4px_0_0_var(--border)]" />
+              <CarouselNext className="right-4 z-10 h-12 w-12 border-[4px] bg-secondary-background shadow-[4px_4px_0_0_var(--border)]" />
+            </Carousel>
+          ) : (
+            <Image
+              src={imageSrc}
+              alt={product.productName}
+              width={900}
+              height={900}
+              className="aspect-square w-full object-cover"
+            />
+          )}
+          <Button
+            type="button"
+            size="icon"
+            aria-label={`${isWishlisted ? "Remove" : "Add"} ${product.productName} ${isWishlisted ? "from" : "to"} wishlist`}
+            className="absolute right-4 top-4 h-14 w-14 border-[4px] bg-secondary-background text-foreground shadow-[6px_6px_0_0_var(--border)] hover:bg-main"
+            disabled={wishlistLoading}
+            onClick={handleWishlist}
+          >
+            <Heart
+              className={isWishlisted ? "h-7 w-7 fill-chart-3" : "h-7 w-7"}
+              strokeWidth={1}
+            />
+          </Button>
         </div>
         <TriangleTrim />
       </div>

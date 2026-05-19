@@ -1,4 +1,3 @@
-import axios from "axios";
 import api from "./apiInstance";
 
 export const loginApi = async (formData) => {
@@ -30,6 +29,24 @@ export const getMeApi = async () => {
 export const logoutApi = async () => {
   try {
     const res = await api.post("/user/logout");
+    return res;
+  } catch (error) {
+    return error;
+  }
+};
+
+export const updateUserApi = async (id, data) => {
+  try {
+    const res = await api.patch(`/user/update/${id}`, data);
+    return res;
+  } catch (error) {
+    return error;
+  }
+};
+
+export const deleteUserApi = async (id) => {
+  try {
+    const res = await api.delete(`/user/delete/${id}`);
     return res;
   } catch (error) {
     return error;

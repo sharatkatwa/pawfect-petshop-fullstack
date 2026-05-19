@@ -1,9 +1,11 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
+  deleteUser,
   getCurrentUser,
   loginUser,
   logoutUser,
   signupUser,
+  updateUser,
 } from "../thunks/authThunk";
 import { toast } from "sonner";
 
@@ -92,6 +94,38 @@ const authSlice = createSlice({
           (state.isAuthenticated = false),
           (state.initialized = true),
           toast.success("Logged out successfully", { position: "top-center" }));
+      })
+      .addCase(updateUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+        state.user = action.payload.user;
+        toast.success(action.payload.message, { position: "top-center" });
+      })
+      .addCase(updateUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        toast.error(action.payload, { position: "top-center" });
+      })
+      .addCase(deleteUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+        state.user = null;
+        state.isAuthenticated = false;
+        state.initialized = true;
+        toast.success(action.payload.message, { position: "top-center" });
+      })
+      .addCase(deleteUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        toast.error(action.payload, { position: "top-center" });
       });
   },
 });

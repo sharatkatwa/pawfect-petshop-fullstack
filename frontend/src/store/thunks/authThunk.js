@@ -1,5 +1,15 @@
-import { getMeApi, loginApi, logoutApi, signupApi } from "@/api/authApi";
+import {
+  deleteUserApi,
+  getMeApi,
+  loginApi,
+  logoutApi,
+  signupApi,
+  updateUserApi,
+} from "@/api/authApi";
 import { createAsyncThunk } from "@reduxjs/toolkit";
+
+const getErrorMessage = (res, fallback) =>
+  res.response?.data?.message || res.response?.data?.error || res.message || fallback;
 
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
@@ -54,6 +64,38 @@ export const getCurrentUser = createAsyncThunk(
     } catch (error) {
       console.log(error);
       return rejectWithValue(error.message);
+    }
+  },
+);
+
+export const updateUser = createAsyncThunk(
+  "auth/updateUser",
+  async ({ id, data }, { rejectWithValue }) => {
+    try {
+      const res = await updateUserApi(id, data);
+      if (res.status !== 200) {
+        return rejectWithValue(getErrorMessage(res, "Profile update failed"));
+      }
+
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  },
+);
+
+export const deleteUser = createAsyncThunk(
+  "auth/deleteUser",
+  async (id, { rejectWithValue }) => {
+    try {
+      const res = await deleteUserApi(id);
+      if (res.status !== 200) {
+        return rejectWithValue(getErrorMessage(res, "Account delete failed"));
+      }
+
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   },
 );

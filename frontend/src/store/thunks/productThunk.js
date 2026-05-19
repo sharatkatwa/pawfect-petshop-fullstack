@@ -1,7 +1,10 @@
 import {
   createProductApi,
+  deleteProductReviewApi,
   deleteProductApi,
   getAllProductsApi,
+  getMyProductsApi,
+  getProductReviewsApi,
   getSingleProductApi,
   updateProductApi,
 } from "@/api/productApi";
@@ -33,6 +36,24 @@ export const getSingleProduct = createAsyncThunk(
       const res = await getSingleProductApi(id);
       if (res.status !== 200) {
         return rejectWithValue(getErrorMessage(res, "Product fetch failed"));
+      }
+
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  },
+);
+
+export const getMyProducts = createAsyncThunk(
+  "product/getMyProducts",
+  async (params = {}, { rejectWithValue }) => {
+    try {
+      const res = await getMyProductsApi(params);
+      if (res.status !== 200) {
+        return rejectWithValue(
+          getErrorMessage(res, "Seller products fetch failed"),
+        );
       }
 
       return res.data;
@@ -84,6 +105,38 @@ export const deleteProduct = createAsyncThunk(
       }
 
       return { ...res.data, id };
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  },
+);
+
+export const getProductReviews = createAsyncThunk(
+  "product/getProductReviews",
+  async ({ productId, params = {} }, { rejectWithValue }) => {
+    try {
+      const res = await getProductReviewsApi(productId, params);
+      if (res.status !== 200) {
+        return rejectWithValue(getErrorMessage(res, "Reviews fetch failed"));
+      }
+
+      return { productId, ...res.data };
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  },
+);
+
+export const deleteProductReview = createAsyncThunk(
+  "product/deleteProductReview",
+  async ({ productId, reviewId }, { rejectWithValue }) => {
+    try {
+      const res = await deleteProductReviewApi(productId, reviewId);
+      if (res.status !== 200) {
+        return rejectWithValue(getErrorMessage(res, "Review delete failed"));
+      }
+
+      return { productId, reviewId, ...res.data };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
