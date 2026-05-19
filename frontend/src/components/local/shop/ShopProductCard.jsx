@@ -1,20 +1,54 @@
-import { ShoppingCart } from "lucide-react";
+"use client";
+
+import { ShoppingBag, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { addToCart } from "@/store/thunks/cartThunk";
+import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "sonner";
 
 export default function ShopProductCard({
   _id,
   productName,
   price,
   images,
+  stock,
+  status,
   // badge,
   // badgeColor = "bg-[var(--chart-3)]",
   // swatches = [],
 }) {
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { loading } = useSelector((state) => state.cart);
+
   const imageSrc =
     images?.[0] ||
     `https://placehold.co/800x600/png?text=${encodeURIComponent(productName || "Product")}`;
+  const isUnavailable = status !== "available" || stock < 1;
+
+  const handleAddToCart = () => {
+    if (!isAuthenticated) {
+      toast.error("Login to add products to cart", { position: "top-center" });
+      router.push("/auth/login");
+      return;
+    }
+
+    dispatch(addToCart({ productId: _id, quantity: 1 }));
+  };
+
+  const handleBuyNow = () => {
+    if (!isAuthenticated) {
+      toast.error("Login to checkout products", { position: "top-center" });
+      router.push("/auth/login");
+      return;
+    }
+
+    router.push(`/checkout?productId=${_id}&quantity=1`);
+  };
 
   return (
     <article className="flex min-h-[450px] flex-col border-[4px] border-border bg-secondary-background p-2 shadow-shadow">
@@ -47,23 +81,30 @@ export default function ShopProductCard({
         </p>
 
         <div className="mt-auto flex items-end justify-between gap-4 pt-8">
-          <div className="flex gap-1">
-            {/* {swatches.map((swatch, index) => (
-              <span
-                key={`${name}-${index}`}
-                className={`h-4 w-4 border border-border ${swatch}`}
-                aria-hidden="true"
-              />
-            ))} */}
-          </div>
-          <Button
+        
+          <div className="w-full flex items-center justify-between gap-2">
+            <Button
               type="button"
-            size="icon"
-            aria-label={`Add ${productName} to cart`}
-            className="h-12 w-12 border-[4px] bg-foreground text-secondary-background"
-          >
-            <ShoppingCart className="h-5 w-5" strokeWidth={2.5} />
-          </Button>
+              size="sm"
+              aria-label={`Buy ${productName} now`}
+              className="h-12 w-full px-3 font-heading text-xs font-black uppercase"
+              disabled={isUnavailable}
+              onClick={handleBuyNow}
+            >
+              <ShoppingBag className="h-4 w-4" strokeWidth={2.5} />
+              Buy now
+            </Button>
+            <Button
+              type="button"
+              size="icon"
+              aria-label={`Add ${productName} to cart`}
+              className="h-12 w-20  bg-foreground text-secondary-background"
+              disabled={loading || isUnavailable}
+              onClick={handleAddToCart}
+            >
+              <ShoppingCart className="h-5 w-5" strokeWidth={2.5} />
+            </Button>
+          </div>
         </div>
       </div>
     </article>

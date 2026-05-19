@@ -1,6 +1,7 @@
 import { Heart, LogOut, Package, PlusCircle, User, UserCircle2Icon } from "lucide-react";
 
 import React from "react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -50,9 +51,11 @@ export default function DropDown() {
             <span> {user?.name}</span>
           </DropdownMenuItem>
 
-          <DropdownMenuItem>
-            <Package />
-            <span>Orders</span>
+          <DropdownMenuItem asChild>
+            <Link href="/orders">
+              <Package />
+              <span>My Orders</span>
+            </Link>
           </DropdownMenuItem>
 
           <DropdownMenuItem>

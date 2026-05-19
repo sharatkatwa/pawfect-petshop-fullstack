@@ -12,6 +12,9 @@ const initialState = {
   products: [],
   product: null,
   total: 0,
+  page: 1,
+  limit: 10,
+  totalPages: 1,
   loading: false,
   error: null,
 };
@@ -37,7 +40,13 @@ const productSlice = createSlice({
         state.loading = false;
         state.error = null;
         state.products = action.payload.products || [];
-        state.total = action.payload.total || state.products.length;
+        state.total =
+          action.payload.totalProducts ||
+          action.payload.total ||
+          state.products.length;
+        state.page = action.payload.page || 1;
+        state.limit = action.payload.limit || 10;
+        state.totalPages = action.payload.totalPages || 1;
       })
       .addCase(getAllProducts.rejected, (state, action) => {
         state.loading = false;

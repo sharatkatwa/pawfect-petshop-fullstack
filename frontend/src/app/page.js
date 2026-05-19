@@ -92,7 +92,6 @@ function ZigZagDivider() {
 }
 
 export default function Home() {
- 
   const router = useRouter();
   return (
     <main className="flex-1 bg-background tracking-tight pt-10">
@@ -137,7 +136,10 @@ export default function Home() {
                 essentials.
               </p>
             </div>
-            <Button className="h-auto border-[3px] bg-[var(--chart-3)] px-8 py-5 font-heading text-2xl uppercase text-black hover:bg-[var(--chart-3)]">
+            <Button
+              onClick={() => router.push("/shop")}
+              className="h-auto border-[3px] bg-[var(--chart-3)] px-8 py-5 font-heading text-2xl uppercase text-black hover:bg-[var(--chart-3)]"
+            >
               Shop the drop
             </Button>
           </div>

@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 const filters = [
   { label: "Category", color: "bg-[var(--chart-2)]" },
@@ -22,6 +22,7 @@ const filters = [
 
 export default function ShopControls({ filters, setFilters }) {
   const searchRef = useRef(null);
+  const [priceRange, setPriceRange] = useState("");
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -72,7 +73,9 @@ export default function ShopControls({ filters, setFilters }) {
             </SelectContent>
           </Select>
           <Select
+            value={priceRange}
             onValueChange={(value) => {
+              setPriceRange(value);
               const ranges = {
                 "0-1000": { minPrice: 0, maxPrice: 1000 },
                 "1000-2000": { minPrice: 1000, maxPrice: 2000 },
@@ -109,12 +112,15 @@ export default function ShopControls({ filters, setFilters }) {
 
         <Button
           onClick={() => {
+            setPriceRange("");
+            if (searchRef.current) searchRef.current.value = "";
             setFilters((prev) => ({
               ...prev,
               search: "",
               category: "",
               minPrice: "",
               maxPrice: "",
+              page: 1,
             }));
           }}
           variant={"neutral"}

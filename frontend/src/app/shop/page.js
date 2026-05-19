@@ -6,11 +6,11 @@ import ShopProductGrid from "@/components/local/shop/ShopProductGrid";
 import { Spinner } from "@/components/ui/spinner";
 import { getAllProducts } from "@/store/thunks/productThunk";
 import { PackageOpen } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 const ShopPage = () => {
-  const { products, total, loading, error } = useSelector(
+  const { products, total, page, totalPages, loading, error } = useSelector(
     (state) => state.product,
   );
 
@@ -22,24 +22,29 @@ const ShopPage = () => {
     page: 1,
     limit: 8,
   });
-  useEffect(() => {
-    console.log(
-      "Products",
-      products,
-      "total",
-      total,
-      "loading",
-      loading,
-      "error",
-      error,
-    );
-  }, [products]);
-
+  const didMountRef = useRef(false);
   const dispatch = useDispatch();
-  console.log(filters);
+
   useEffect(() => {
     dispatch(getAllProducts(filters));
   }, [dispatch, filters]);
+
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+      // document.documentElement.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+      // document.body.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    });
+  }, [filters.page]);
+
+  const handlePageChange = (nextPage) => {
+    setFilters((prev) => ({ ...prev, page: nextPage }));
+  };
 
   const LoadProdcuts = (
     <>
@@ -61,7 +66,12 @@ const ShopPage = () => {
       <ShopControls filters={filters} setFilters={setFilters} />
       {/* <LoadProdcuts /> */}
       {LoadProdcuts}
-      <ShopPagination />
+      <ShopPagination
+        currentPage={page}
+        totalPages={totalPages}
+        loading={loading}
+        onPageChange={handlePageChange}
+      />
     </main>
   );
 };

@@ -1,6 +1,12 @@
-import { ShoppingBag } from "lucide-react";
+"use client";
+
+import { CreditCard, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { addToCart } from "@/store/thunks/cartThunk";
+import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "sonner";
 
 function TriangleTrim() {
   return (
@@ -33,9 +39,35 @@ function DetailList({ title, items }) {
 }
 
 export default function ProductDetail({ product }) {
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { loading } = useSelector((state) => state.cart);
+
   const imageSrc =
     product.images?.[0] ||
     `https://placehold.co/800x600/png?text=${encodeURIComponent(product.productName || "Product")}`;
+  const isUnavailable = product.status !== "available" || product.stock < 1;
+
+  const handleAddToCart = () => {
+    if (!isAuthenticated) {
+      toast.error("Login to add products to cart", { position: "top-center" });
+      router.push("/auth/login");
+      return;
+    }
+
+    dispatch(addToCart({ productId: product._id, quantity: 1 }));
+  };
+
+  const handleBuyNow = () => {
+    if (!isAuthenticated) {
+      toast.error("Login to checkout products", { position: "top-center" });
+      router.push("/auth/login");
+      return;
+    }
+
+    router.push(`/checkout?productId=${product._id}&quantity=1`);
+  };
 
   const specs = [
     product.category ? `Category: ${product.category}` : null,
@@ -89,10 +121,27 @@ export default function ProductDetail({ product }) {
           ))}
         </div>
 
-        <Button className="mt-12 h-22 w-full border-[4px] px-8 font-heading text-2xl font-black uppercase shadow-[8px_8px_0_0_var(--border)]">
-          <ShoppingBag className="h-7 w-7" strokeWidth={2.75} />
-          Add to Bag
-        </Button>
+        <div className="mt-12 grid gap-4 md:grid-cols-2">
+          <Button
+            type="button"
+            className="h-20 w-full border-[4px] px-6 font-heading text-xl font-black uppercase shadow-[8px_8px_0_0_var(--border)]"
+            disabled={isUnavailable}
+            onClick={handleBuyNow}
+          >
+            <CreditCard className="h-6 w-6" strokeWidth={2.75} />
+            {isUnavailable ? "Unavailable" : "Buy Now"}
+          </Button>
+          <Button
+            type="button"
+            variant="neutral"
+            className="h-20 w-full border-[4px] px-6 font-heading text-xl font-black uppercase shadow-[8px_8px_0_0_var(--border)]"
+            disabled={loading || isUnavailable}
+            onClick={handleAddToCart}
+          >
+            <ShoppingBag className="h-6 w-6" strokeWidth={2.75} />
+            Add to Bag
+          </Button>
+        </div>
 
         <div className="mt-24 grid gap-8 border-t-[4px] border-border pt-0 md:grid-cols-2">
           <DetailList title="Specs" items={specs} />

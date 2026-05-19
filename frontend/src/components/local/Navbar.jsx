@@ -2,11 +2,25 @@
 import React from "react";
 import Link from "next/link";
 import { Button } from "../ui/button";
-import { CircleUserRound, ShoppingCart } from "lucide-react";
 import { useSelector } from "react-redux";
-import { Spinner } from "../ui/spinner";
 import { usePathname, useRouter } from "next/navigation";
 import DropDown from "./DropDown";
+import CartMenu from "./CartMenu";
+import Image from "next/image";
+
+const getNavLinkClass = (isActive) =>
+  [
+    "border-2 px-3 py-2 font-heading text-sm uppercase transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2",
+    isActive
+      ? "border-border bg-main shadow-[4px_4px_0_0_var(--border)]"
+      : "border-transparent hover:-rotate-3   hover:-translate-x-0.5 hover:-translate-y-0.5 hover:border-border hover:bg-main hover:shadow-[4px_4px_0_0_var(--border)]",
+  ].join(" ");
+
+const isActiveRoute = (pathName, href) => {
+  if (href === "/") return pathName === "/";
+
+  return pathName === href || pathName.startsWith(`${href}/`);
+};
 
 const Navbar = () => {
   const { isAuthenticated, loading } = useSelector((state) => state.auth);
@@ -17,26 +31,36 @@ const Navbar = () => {
       <div className="flex items-center gap-7 md:gap-9">
         <Link
           href={"/"}
-          className="flex border-[4px] border-border bg-main px-4 py-2 font-heading text-xl font-black uppercase shadow-shadow"
+          className="transition-transform duration-150 hover:-rotate-2 hover:scale-105"
         >
-          Petpunk
+          <Image src={'/logo.png'} width={100} height={100} alt="logo" />
         </Link>
         <div className="hidden items-center gap-8 md:flex">
-          <Button
-            asChild
-            variant={"reverse"}
-            className="h-10 px-6 font-heading text-sm uppercase"
+          <Link
+            href={"/"}
+            className={getNavLinkClass(isActiveRoute(pathName, "/"))}
           >
-            <Link href={"/"}>Home</Link>
-          </Button>
-          <Link href={"/shop"}>Shop</Link>
-          <Link href={"/"} className="font-heading text-sm uppercase">
+            Home
+          </Link>
+          <Link
+            href={"/shop"}
+            className={getNavLinkClass(isActiveRoute(pathName, "/shop"))}
+          >
+            Shop
+          </Link>
+          <Link href={"/"} className={getNavLinkClass(false)}>
             New
           </Link>
-          <Link href={"/products"} className="font-heading text-sm uppercase">
+          <Link
+            href={"/products"}
+            className={getNavLinkClass(isActiveRoute(pathName, "/products"))}
+          >
             Brands
           </Link>
-          <Link href={"/pets"} className="font-heading text-sm uppercase">
+          <Link
+            href={"/pets"}
+            className={getNavLinkClass(isActiveRoute(pathName, "/pets"))}
+          >
             Sale
           </Link>
         </div>
@@ -52,9 +76,7 @@ const Navbar = () => {
           <>
             {" "}
             <DropDown  />
-            {/* <Button variant={"noShadow"}> */}
-              <ShoppingCart className="h-6 w-6" strokeWidth={2.25} />
-            {/* </Button> */}
+            <CartMenu />
           </>
         ) : pathName == "/auth/login" ? (
           <Button onClick={() => router.push("/auth/signup")}>Signup</Button>

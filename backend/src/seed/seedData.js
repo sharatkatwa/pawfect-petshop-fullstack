@@ -1,16 +1,33 @@
 const path = require("path");
+const dns = require("dns");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
 
-const User = require("../models/user.model");
+const Cart = require("../models/cart.model");
+const Order = require("../models/order.model");
 const Product = require("../models/product.model");
+const Review = require("../models/review.model");
+const User = require("../models/user.model");
+const Wishlist = require("../models/wishlist.model");
 
 dotenv.config({ path: path.join(__dirname, "../../.env") });
+
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
+dns.setDefaultResultOrder("ipv4first");
 
 const password = "Password@123";
 
 const users = [
+  {
+    name: "Admin User",
+    age: 32,
+    email: "admin@example.com",
+    phone: "9000000001",
+    address: "Petpunk HQ, Ahmedabad",
+    role: "seller",
+    admin: true,
+  },
   {
     name: "Aarav Sharma",
     age: 28,
@@ -172,16 +189,69 @@ const buildProducts = (sellerIds) =>
       ...(gender ? { gender } : {}),
       ...(isVaccinated !== undefined ? { isVaccinated } : {}),
       status: stock > 0 ? "available" : "out_of_stock",
+      averageRating: 0,
+      totalReviews: 0,
     };
   });
+
+const getTotalAmount = (items) =>
+  items.reduce((total, item) => total + item.price * item.quantity, 0);
+
+const buildOrderItem = (product, quantity = 1) => ({
+  product: product._id,
+  quantity,
+  price: product.price,
+});
+
+const applyOrderStock = async (orders) => {
+  const productMap = new Map();
+
+  orders.forEach((order) => {
+    if (order.status === "cancelled") return;
+
+    order.items.forEach((item) => {
+      const productId = item.product.toString();
+      productMap.set(productId, (productMap.get(productId) || 0) + item.quantity);
+    });
+  });
+
+  await Promise.all(
+    [...productMap.entries()].map(async ([productId, soldQuantity]) => {
+      const product = await Product.findById(productId);
+      if (!product) return;
+
+      product.stock = Math.max(product.stock - soldQuantity, 0);
+      if (product.stock === 0) {
+        product.status = product.category === "pet" ? "sold" : "out_of_stock";
+      }
+
+      await product.save();
+    })
+  );
+};
+
+const updateProductRatingStats = async (productIds) => {
+  await Promise.all(
+    productIds.map(async (productId) => {
+      const reviews = await Review.find({ product: productId });
+      const totalReviews = reviews.length;
+      const averageRating = totalReviews
+        ? reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+        : 0;
+
+      await Product.findByIdAndUpdate(productId, {
+        averageRating: Number(averageRating.toFixed(1)),
+        totalReviews,
+      });
+    })
+  );
+};
 
 const seed = async () => {
   if (!process.env.MONGO_URI) {
     throw new Error("MONGO_URI is missing in backend/.env");
   }
-const dns = require('dns')
-dns.setServers(["8.8.8.8", "8.8.4.4"]);
-dns.setDefaultResultOrder("ipv4first");
+
   await mongoose.connect(process.env.MONGO_URI);
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -190,26 +260,245 @@ dns.setDefaultResultOrder("ipv4first");
     users.map((user) =>
       User.updateOne(
         { email: user.email },
-        { $set: { ...user, password: hashedPassword, isActive: true } },
+        {
+          $set: {
+            ...user,
+            admin: Boolean(user.admin),
+            password: hashedPassword,
+            isActive: true,
+          },
+        },
         { upsert: true, runValidators: true }
       )
     )
   );
 
-  const sellerUsers = await User.find({
-    email: { $in: users.filter((user) => user.role === "seller").map((user) => user.email) },
+  const seededUsers = await User.find({
+    email: { $in: users.map((user) => user.email) },
   });
+  const seededUserIds = seededUsers.map((user) => user._id);
+  const sellerUsers = seededUsers.filter((user) => user.role === "seller");
+  const customerUsers = seededUsers.filter((user) => user.role === "customer");
   const sellerIds = sellerUsers.map((seller) => seller._id);
   const products = buildProducts(sellerIds);
 
-  await Product.deleteMany({
-    seller: { $in: sellerIds },
-    productName: { $in: products.map((product) => product.productName) },
-  });
-  await Product.insertMany(products);
+  await Promise.all([
+    Cart.deleteMany({ buyer: { $in: seededUserIds } }),
+    Wishlist.deleteMany({ buyer: { $in: seededUserIds } }),
+    Order.deleteMany({ buyer: { $in: seededUserIds } }),
+    Review.deleteMany({ user: { $in: seededUserIds } }),
+    Product.deleteMany({
+      productName: { $in: products.map((product) => product.productName) },
+    }),
+  ]);
 
-  console.log(`Seeded ${users.length} users and ${products.length} products.`);
+  const insertedProducts = await Product.insertMany(products);
+  const productByName = Object.fromEntries(
+    insertedProducts.map((product) => [product.productName, product])
+  );
+  const customerByEmail = Object.fromEntries(
+    customerUsers.map((user) => [user.email, user])
+  );
+
+  const carts = [
+    {
+      buyer: customerByEmail["ananya.customer@example.com"]._id,
+      items: [
+        buildOrderItem(productByName["Premium Dog Food"], 2),
+        buildOrderItem(productByName["Dog Chew Toy"], 1),
+      ],
+    },
+    {
+      buyer: customerByEmail["rohan.customer@example.com"]._id,
+      items: [
+        buildOrderItem(productByName["Cat Feather Wand"], 2),
+        buildOrderItem(productByName["Cat Litter Box"], 1),
+      ],
+    },
+    {
+      buyer: customerByEmail["meera.customer@example.com"]._id,
+      items: [
+        buildOrderItem(productByName["Bird Seed Mix"], 3),
+        buildOrderItem(productByName["Bird Cage Medium"], 1),
+      ],
+    },
+  ].map((cart) => ({
+    ...cart,
+    totalAmount: getTotalAmount(cart.items),
+  }));
+
+  const wishlists = [
+    {
+      buyer: customerByEmail["ananya.customer@example.com"]._id,
+      items: [
+        { product: productByName["Golden Retriever Puppy"]._id },
+        { product: productByName["Pet Travel Carrier"]._id },
+      ],
+    },
+    {
+      buyer: customerByEmail["dev.customer@example.com"]._id,
+      items: [
+        { product: productByName["Labrador Puppy"]._id },
+        { product: productByName["Training Treat Pouch"]._id },
+      ],
+    },
+    {
+      buyer: customerByEmail["isha.customer@example.com"]._id,
+      items: [
+        { product: productByName["Persian Cat Kitten"]._id },
+        { product: productByName["Kitten Tuna Food"]._id },
+      ],
+    },
+  ];
+
+  const orderDrafts = [
+    {
+      buyer: customerByEmail["ananya.customer@example.com"]._id,
+      items: [
+        buildOrderItem(productByName["Premium Dog Food"], 1),
+        buildOrderItem(productByName["Dog Grooming Brush"], 1),
+      ],
+      shippingAddress: {
+        phone: "9543210987",
+        address: "41 Jubilee Hills, Hyderabad",
+      },
+      paymentMethod: "cod",
+      paymentStatus: "pending",
+      paid: false,
+      status: "pending",
+    },
+    {
+      buyer: customerByEmail["rohan.customer@example.com"]._id,
+      items: [
+        buildOrderItem(productByName["Persian Cat Kitten"], 1),
+        buildOrderItem(productByName["Kitten Tuna Food"], 2),
+      ],
+      shippingAddress: {
+        phone: "9432109876",
+        address: "7 Anna Salai, Chennai",
+      },
+      paymentMethod: "razorpay",
+      paymentStatus: "paid",
+      razorpayOrderId: "order_demo_rohan_001",
+      razorpayPaymentId: "pay_demo_rohan_001",
+      razorpaySignature: "demo_signature_rohan",
+      paid: true,
+      paidAt: new Date("2026-05-10T10:30:00.000Z"),
+      status: "delivered",
+    },
+    {
+      buyer: customerByEmail["meera.customer@example.com"]._id,
+      items: [
+        buildOrderItem(productByName["Budgie Pair"], 1),
+        buildOrderItem(productByName["Bird Cage Medium"], 1),
+      ],
+      shippingAddress: {
+        phone: "9321098765",
+        address: "63 Civil Lines, Delhi",
+      },
+      paymentMethod: "cod",
+      paymentStatus: "pending",
+      paid: false,
+      status: "confirmed",
+    },
+    {
+      buyer: customerByEmail["dev.customer@example.com"]._id,
+      items: [
+        buildOrderItem(productByName["Labrador Puppy"], 1),
+        buildOrderItem(productByName["Adjustable Dog Collar"], 1),
+      ],
+      shippingAddress: {
+        phone: "9210987654",
+        address: "9 Ring Road, Ahmedabad",
+      },
+      paymentMethod: "razorpay",
+      paymentStatus: "paid",
+      razorpayOrderId: "order_demo_dev_001",
+      razorpayPaymentId: "pay_demo_dev_001",
+      razorpaySignature: "demo_signature_dev",
+      paid: true,
+      paidAt: new Date("2026-05-12T12:45:00.000Z"),
+      status: "shipped",
+    },
+    {
+      buyer: customerByEmail["isha.customer@example.com"]._id,
+      items: [
+        buildOrderItem(productByName["Cat Nail Clipper"], 1),
+        buildOrderItem(productByName["Cat Hairball Gel"], 1),
+      ],
+      shippingAddress: {
+        phone: "9109876543",
+        address: "33 FC Road, Pune",
+      },
+      paymentMethod: "cod",
+      paymentStatus: "pending",
+      paid: false,
+      status: "cancelled",
+    },
+    {
+      buyer: customerByEmail["sara.customer@example.com"]._id,
+      items: [
+        buildOrderItem(productByName["Fish Flakes"], 2),
+        buildOrderItem(productByName["Aquarium Filter"], 1),
+      ],
+      shippingAddress: {
+        phone: "9876501234",
+        address: "14 Panampilly Nagar, Kochi",
+      },
+      paymentMethod: "razorpay",
+      paymentStatus: "paid",
+      razorpayOrderId: "order_demo_sara_001",
+      razorpayPaymentId: "pay_demo_sara_001",
+      razorpaySignature: "demo_signature_sara",
+      paid: true,
+      paidAt: new Date("2026-05-14T09:15:00.000Z"),
+      status: "delivered",
+    },
+  ].map((order) => ({
+    ...order,
+    totalAmount: getTotalAmount(order.items),
+  }));
+
+  const orders = await Order.insertMany(orderDrafts);
+  await applyOrderStock(orders);
+  await Cart.insertMany(carts);
+  await Wishlist.insertMany(wishlists);
+
+  const reviews = [
+    {
+      user: customerByEmail["rohan.customer@example.com"]._id,
+      product: productByName["Persian Cat Kitten"]._id,
+      rating: 5,
+      comment: "Beautiful kitten, healthy and already comfortable at home.",
+    },
+    {
+      user: customerByEmail["rohan.customer@example.com"]._id,
+      product: productByName["Kitten Tuna Food"]._id,
+      rating: 4,
+      comment: "Good quality food and my kitten liked it immediately.",
+    },
+    {
+      user: customerByEmail["sara.customer@example.com"]._id,
+      product: productByName["Fish Flakes"]._id,
+      rating: 5,
+      comment: "Fish are eating well and the pack is good value.",
+    },
+    {
+      user: customerByEmail["sara.customer@example.com"]._id,
+      product: productByName["Aquarium Filter"]._id,
+      rating: 4,
+      comment: "Keeps the tank clear and was simple to install.",
+    },
+  ];
+
+  await Review.insertMany(reviews);
+  await updateProductRatingStats([...new Set(reviews.map((review) => review.product))]);
+
+  console.log(
+    `Seeded ${users.length} users, ${insertedProducts.length} products, ${carts.length} carts, ${wishlists.length} wishlists, ${orders.length} orders, and ${reviews.length} reviews.`
+  );
   console.log(`Dummy user password: ${password}`);
+  console.log("Admin login: admin@example.com");
 
   await mongoose.disconnect();
 };
