@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { getCurrentUser } from "@/store/thunks/authThunk";
 import { useEffect } from "react";
 import { dispatch } from "@/store/store";
+import Image from "next/image";
 
 const categoryCards = [
   {
@@ -98,22 +99,22 @@ export default function Home() {
       {/* <div className="absolute inset-0 top-100"> */}
       <FloatingElement
         className={
-          "h-20 w-20 animate-floatY rotate-20 bg-chart-3 absolute right-[15%] top-[50%] z-80"
+          "h-20 w-20 animate-floatY rotate-20 bg-chart-3 absolute right-[15%] top-[50%] z-80 hidden lg:block"
         }
       />
       <FloatingElement
         className={
-          "h-15 w-15 animate-floatY rounded-full rotate-0 bg-chart-1 absolute right-[10%] top-[20%] z-80"
+          "h-15 w-15 animate-floatY rounded-full rotate-0 bg-chart-1 absolute right-[10%] top-[20%] z-80 hidden lg:block"
         }
       />
       <FloatingElement
         className={
-          "h-25 w-25 animate-floatY  rotate-0 bg-chart-1 absolute right-[10%] top-[70%] z-80"
+          "h-25 w-25 animate-floatY  rotate-0 bg-chart-1 absolute right-[10%] top-[70%] z-80 hidden lg:block"
         }
       />
       <FloatingElement
         className={
-          "h-15 w-15 animate-floatY rounded-full rotate-0 bg-chart-2 absolute right-[47%] top-[35%] z-80"
+          "h-15 w-15 animate-floatY rounded-full rotate-0 bg-chart-2 absolute right-[47%] top-[35%] z-80 hidden lg:block"
         }
       />
       {/* </div> */}
@@ -146,12 +147,14 @@ export default function Home() {
 
           <div className="relative mx-auto w-full max-w-2xl">
             <div className="absolute inset-x-6 bottom-[-15px] top-8 rotate-[3deg] border-5 border-border bg-chart-3" />
-            <div className="relative rotate-2 border-5 bg-[var(--chart-1)]">
+            <div className="relative rotate-2 border-5 bg-[var(--chart-1)] hover:-rotate-2 transition-all">
               <div className="absolute right-[-22px] top-5 -rotate-12 border-[3px] border-border bg-[var(--chart-1)] px-5 py-3 font-heading text-sm uppercase shadow-shadow sm:text-base">
                 100% punk
               </div>
-              <div className=" bg-main flex min-h-[460px] items-end justify-center overflow-hidden p-6 sm:min-h-[540px]">
-                <img
+              <div className=" bg-main flex min-h-[460px] items-end justify-center overflow-hidden p-6 sm:min-h-[540px] ">
+                <Image
+                  width={1000}
+                  height={1000}
                   src="https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=1000&q=80"
                   alt="Cool dog wearing bright glasses"
                   className="max-h-[520px] w-auto object-contain"
@@ -165,7 +168,7 @@ export default function Home() {
       <section className="border-b-[3px] border-border bg-secondary-background">
         <div className="mx-auto max-w-[1400px] px-6 py-14 md:px-10 lg:px-16">
           <SectionLabel eyebrow="Browse crews" title="" />
-          <div className="mt-8 grid gap-6 lg:grid-cols-3">
+          <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {categoryCards.map((card) => (
               <CategoryCard key={card.title} {...card} />
             ))}

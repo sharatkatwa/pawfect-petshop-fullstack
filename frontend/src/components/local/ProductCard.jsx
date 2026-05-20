@@ -4,7 +4,7 @@ const { Card, CardContent } = require("../ui/card");
 
 export default function ProductCard({ name, price, image, tag }) {
   return (
-    <Card className="gap-0 border-[3px] bg-secondary-background py-0">
+    <Card className="gap-0 border-[3px] max-w-90 mx-auto bg-secondary-background py-0">
       <CardContent className="p-1.5">
         <div className="relative overflow-hidden border-[3px] border-border bg-white">
           {tag ? (

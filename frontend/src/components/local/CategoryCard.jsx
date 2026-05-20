@@ -4,7 +4,7 @@ import { Card, CardContent } from "../ui/card";
 export default function CategoryCard({ title, subtitle, image, color }) {
   return (
     <Card
-      className="gap-0 border-[3px] py-0 group"
+      className=" max-w-90 w-full mx-auto gap-0 border-[3px] py-0 group hover:scale-[1.02] hover:rotate-1 transition-all"
       style={{ backgroundColor: color }}
     >
       <CardContent className="space-y-5 p-6">
