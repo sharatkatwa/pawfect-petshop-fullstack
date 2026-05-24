@@ -2,10 +2,12 @@ import {
   cancelOrderApi,
   checkoutFromCartApi,
   createOrderApi,
+  createRazorpayOrderApi,
   getMyOrdersApi,
   getSellerOrdersApi,
   getSingleOrderApi,
   updateOrderStatusApi,
+  verifyRazorpayPaymentApi,
 } from "@/api/orderApi";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
@@ -35,6 +37,42 @@ export const checkoutFromCart = createAsyncThunk(
       const res = await checkoutFromCartApi(data);
       if (res.status !== 201) {
         return rejectWithValue(getErrorMessage(res, "Checkout failed"));
+      }
+
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  },
+);
+
+export const createRazorpayOrder = createAsyncThunk(
+  "order/createRazorpayOrder",
+  async (data, { rejectWithValue }) => {
+    try {
+      const res = await createRazorpayOrderApi(data);
+      if (res.status !== 201) {
+        return rejectWithValue(
+          getErrorMessage(res, "Razorpay order create failed"),
+        );
+      }
+
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  },
+);
+
+export const verifyRazorpayPayment = createAsyncThunk(
+  "order/verifyRazorpayPayment",
+  async (data, { rejectWithValue }) => {
+    try {
+      const res = await verifyRazorpayPaymentApi(data);
+      if (res.status !== 201) {
+        return rejectWithValue(
+          getErrorMessage(res, "Razorpay payment verify failed"),
+        );
       }
 
       return res.data;

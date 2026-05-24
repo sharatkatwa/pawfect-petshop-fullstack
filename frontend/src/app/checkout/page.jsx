@@ -27,13 +27,33 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getCart } from "@/store/thunks/cartThunk";
-import { checkoutFromCart, createOrder } from "@/store/thunks/orderThunk";
+import {
+  checkoutFromCart,
+  createOrder,
+  createRazorpayOrder,
+  verifyRazorpayPayment,
+} from "@/store/thunks/orderThunk";
 import { clearLatestOrder } from "@/store/features/orderSlice";
 import CheckoutComplete from "@/components/local/checkout/CheckoutComplete";
 import { getSingleProduct } from "@/store/thunks/productThunk";
 import { clearSingleProduct } from "@/store/features/productSlice";
 
 const getProduct = (item) => item.product || {};
+
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 export default function CheckoutPage() {
   const dispatch = useDispatch();
@@ -128,7 +148,7 @@ export default function CheckoutPage() {
     if (user?.phone) setValue("phone", user.phone);
   }, [setValue, user]);
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     if (isDirectCheckout && !directProductReady) {
       toast.error("Product is not ready for checkout", {
         position: "top-center",
@@ -138,13 +158,6 @@ export default function CheckoutPage() {
 
     if (!isDirectCheckout && !items.length) {
       toast.error("Your cart is empty", { position: "top-center" });
-      return;
-    }
-
-    if (data.paymentMethod === "razorpay") {
-      toast.error("Razorpay verification will be added next", {
-        position: "top-center",
-      });
       return;
     }
 
@@ -165,6 +178,78 @@ export default function CheckoutPage() {
         address: combinedAddress,
       },
     };
+
+    if (data.paymentMethod === "razorpay") {
+      const key = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+
+      if (!key) {
+        toast.error("Razorpay key is missing in frontend env", {
+          position: "top-center",
+        });
+        return;
+      }
+
+      const scriptLoaded = await loadRazorpayScript();
+
+      if (!scriptLoaded) {
+        toast.error("Unable to load Razorpay checkout", {
+          position: "top-center",
+        });
+        return;
+      }
+
+      const razorpayPayload = {
+        source: isDirectCheckout ? "direct" : "cart",
+        shippingAddress: orderPayload.shippingAddress,
+        ...(isDirectCheckout ? { productId, quantity } : {}),
+      };
+      const result = await dispatch(createRazorpayOrder(razorpayPayload));
+
+      if (!createRazorpayOrder.fulfilled.match(result)) return;
+
+      const { razorpayOrder } = result.payload;
+      const razorpay = new window.Razorpay({
+        key,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+        name: "Pawfect",
+        description: isDirectCheckout
+          ? directProduct.productName
+          : "Pet shop cart order",
+        order_id: razorpayOrder.id,
+        prefill: {
+          name: data.fullName.trim(),
+          email: user?.email || "",
+          contact: data.phone.trim(),
+        },
+        notes: {
+          source: razorpayPayload.source,
+        },
+        theme: {
+          color: "#000000",
+        },
+        handler: (response) => {
+          dispatch(
+            verifyRazorpayPayment({
+              ...razorpayPayload,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }),
+          );
+        },
+        modal: {
+          ondismiss: () => {
+            toast.info("Razorpay payment was cancelled", {
+              position: "top-center",
+            });
+          },
+        },
+      });
+
+      razorpay.open();
+      return;
+    }
 
     // Buy Now calls createOrder directly. Cart checkout calls checkoutFromCart.
     if (isDirectCheckout) {
@@ -414,7 +499,7 @@ export default function CheckoutPage() {
                 </Select>
                 {paymentMethod === "razorpay" && (
                   <p className="mt-4 border-[3px] border-border bg-main p-3 text-sm uppercase">
-                    Razorpay payment verification will be comming soon...
+                    You will be redirected to Razorpay secure checkout.
                   </p>
                 )}
               </CardContent>

@@ -18,6 +18,24 @@ export const checkoutFromCartApi = async (data) => {
   }
 };
 
+export const createRazorpayOrderApi = async (data) => {
+  try {
+    const res = await api.post("/order/razorpay/create", data);
+    return res;
+  } catch (error) {
+    return error;
+  }
+};
+
+export const verifyRazorpayPaymentApi = async (data) => {
+  try {
+    const res = await api.post("/order/razorpay/verify", data);
+    return res;
+  } catch (error) {
+    return error;
+  }
+};
+
 export const getMyOrdersApi = async () => {
   try {
     const res = await api.get("/order/my-order");

@@ -1,6 +1,8 @@
 const Order = require("../models/order.model");
 const Product = require("../models/product.model");
 const Cart = require("../models/cart.model");
+const crypto = require("crypto");
+const razorpay = require("../config/razorpay");
 const apiError = require("../utils/apiError");
 const asyncHandler = require("../utils/asyncHandler");
 
@@ -11,7 +13,10 @@ const canAccessOrder = (order, user) => {
   const userId = user._id.toString();
 
   if (user.admin) return true;
-  if (order.buyer._id?.toString() === userId || order.buyer.toString() === userId) {
+  if (
+    order.buyer._id?.toString() === userId ||
+    order.buyer.toString() === userId
+  ) {
     return true;
   }
 
@@ -107,6 +112,186 @@ const prepareOrderItems = async (orderItems) => {
   return { preparedItems, totalAmount };
 };
 
+const getOrderItemsFromRequest = async (body, userId) => {
+  const { source = "cart", items, productId, quantity = 1 } = body;
+
+  if (source === "cart") {
+    const cart = await Cart.findOne({ buyer: userId });
+
+    if (!cart || !cart.items.length) {
+      throw new apiError(400, "Cart is empty");
+    }
+
+    return { orderItems: cart.items, source };
+  }
+
+  const orderItems = Array.isArray(items)
+    ? items
+    : productId
+      ? [{ product: productId, quantity }]
+      : [];
+
+  if (!orderItems.length) {
+    throw new apiError(400, "Order must contain at least one product");
+  }
+
+  return { orderItems, source: "direct" };
+};
+
+const previewOrderItems = async (orderItems) => {
+  let totalAmount = 0;
+
+  for (const item of orderItems) {
+    const orderQuantity = Number(item.quantity || 1);
+    const orderedProductId = item.product || item.productId;
+
+    if (!orderedProductId) {
+      throw new apiError(400, "Product id is required for every order item");
+    }
+
+    if (!Number.isInteger(orderQuantity) || orderQuantity < 1) {
+      throw new apiError(400, "Quantity must be a positive whole number");
+    }
+
+    const product = await Product.findById(orderedProductId);
+
+    if (!product) {
+      throw new apiError(404, "Product not found");
+    }
+
+    if (product.status !== "available") {
+      throw new apiError(400, `${product.productName} is not available`);
+    }
+
+    if (product.stock < orderQuantity) {
+      throw new apiError(
+        400,
+        `Only ${product.stock} item(s) available for ${product.productName}`,
+      );
+    }
+
+    totalAmount += product.price * orderQuantity;
+  }
+
+  return totalAmount;
+};
+
+const createRazorpayOrder = asyncHandler(async (req, res) => {
+  if (!req.user) {
+    throw new apiError(401, "Login required to create Razorpay order");
+  }
+
+  const { orderItems, source } = await getOrderItemsFromRequest(
+    req.body,
+    req.user._id,
+  );
+  const totalAmount = await previewOrderItems(orderItems);
+
+  const razorpayOrder = await razorpay.orders.create({
+    amount: Math.round(totalAmount * 100),
+    currency: "INR",
+    receipt: `receipt_${Date.now()}`,
+    notes: {
+      buyerId: req.user._id.toString(),
+      source,
+    },
+  });
+
+  return res.status(201).json({
+    success: true,
+    message: "Razorpay order created successfully",
+    totalAmount,
+    razorpayOrder,
+  });
+});
+
+const verifyRazorpayPayment = asyncHandler(async (req, res) => {
+  const {
+    razorpay_order_id,
+    razorpay_payment_id,
+    razorpay_signature,
+    shippingAddress,
+  } = req.body;
+
+  if (!req.user) {
+    throw new apiError(401, "Login required to verify payment");
+  }
+
+  if (!shippingAddress?.phone || !shippingAddress?.address) {
+    throw new apiError(400, "Shipping phone and address are required");
+  }
+
+  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    throw new apiError(400, "Razorpay payment details are required");
+  }
+
+  const existingOrder = await Order.findOne({
+    razorpayPaymentId: razorpay_payment_id,
+  });
+
+  if (existingOrder) {
+    throw new apiError(400, "Payment already verified");
+  }
+
+  const generatedSignature = crypto
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+    .digest("hex");
+
+  if (generatedSignature !== razorpay_signature) {
+    throw new apiError(400, "Invalid Razorpay payment signature");
+  }
+
+  const { orderItems, source } = await getOrderItemsFromRequest(
+    req.body,
+    req.user._id,
+  );
+  const expectedTotalAmount = await previewOrderItems(orderItems);
+  const razorpayOrder = await razorpay.orders.fetch(razorpay_order_id);
+
+  if (razorpayOrder.amount !== Math.round(expectedTotalAmount * 100)) {
+    throw new apiError(400, "Razorpay amount does not match order amount");
+  }
+
+  const { preparedItems, totalAmount } = await prepareOrderItems(orderItems);
+
+  const order = await Order.create({
+    buyer: req.user._id,
+    items: preparedItems,
+    totalAmount,
+    shippingAddress,
+    paymentMethod: "razorpay",
+    paymentStatus: "paid",
+    paid: true,
+    paidAt: new Date(),
+    status: "confirmed",
+    razorpayOrderId: razorpay_order_id,
+    razorpayPaymentId: razorpay_payment_id,
+    razorpaySignature: razorpay_signature,
+  });
+
+  if (source === "cart") {
+    const cart = await Cart.findOne({ buyer: req.user._id });
+
+    if (cart) {
+      cart.items = [];
+      cart.totalAmount = 0;
+      await cart.save();
+    }
+  }
+
+  const populatedOrder = await Order.findById(order._id).populate(
+    "items.product",
+    orderProductFields,
+  );
+
+  return res.status(201).json({
+    success: true,
+    message: "Payment verified and order placed successfully",
+    order: populatedOrder,
+  });
+});
+
 const createOrder = asyncHandler(async (req, res) => {
   const {
     items,
@@ -144,8 +329,7 @@ const createOrder = asyncHandler(async (req, res) => {
     totalAmount,
     shippingAddress,
     ...paymentDetails,
-    razorpayOrderId:
-      paymentMethod === "razorpay" ? razorpayOrderId : undefined,
+    razorpayOrderId: paymentMethod === "razorpay" ? razorpayOrderId : undefined,
   });
 
   const populatedOrder = await Order.findById(order._id).populate(
@@ -251,8 +435,7 @@ const checkoutFromCart = asyncHandler(async (req, res) => {
     totalAmount,
     shippingAddress,
     ...paymentDetails,
-    razorpayOrderId:
-      paymentMethod === "razorpay" ? razorpayOrderId : undefined,
+    razorpayOrderId: paymentMethod === "razorpay" ? razorpayOrderId : undefined,
   });
 
   cart.items = [];
@@ -302,7 +485,10 @@ const cancelOrder = asyncHandler(async (req, res) => {
   }
 
   if (!["pending", "confirmed"].includes(order.status)) {
-    throw new apiError(400, "Only pending or confirmed orders can be cancelled");
+    throw new apiError(
+      400,
+      "Only pending or confirmed orders can be cancelled",
+    );
   }
 
   await restoreOrderStock(order);
@@ -320,7 +506,13 @@ const cancelOrder = asyncHandler(async (req, res) => {
 const updateOrderStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
-  const allowedStatuses = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
+  const allowedStatuses = [
+    "pending",
+    "confirmed",
+    "shipped",
+    "delivered",
+    "cancelled",
+  ];
 
   if (!req.user) {
     throw new apiError(401, "Login required to update order status");
@@ -405,6 +597,8 @@ const getSingleOrder = asyncHandler(async (req, res) => {
 module.exports = {
   createOrder,
   checkoutFromCart,
+  createRazorpayOrder,
+  verifyRazorpayPayment,
   getMyOrders,
   getSellerOrders,
   cancelOrder,
